@@ -1,0 +1,5 @@
+python-telegram-bot
+bs4
+requests
+setuptools
+pyshorteners
