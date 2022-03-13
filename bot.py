@@ -27,7 +27,6 @@ def start(update, context):
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="HTML",
                             text=f"Hola <b>{name}</b>, con /help verás todo lo que puedo hacer."
-    )
                             )
 
 
