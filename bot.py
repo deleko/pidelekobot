@@ -4,11 +4,11 @@ import re
 import requests
 import telegram
 import pyshorteners
+from geopy import distance
 from bs4 import BeautifulSoup
 from urllib.parse import urlsplit
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from keys import *
-
 
 # Log config
 logger = logging.getLogger()
@@ -26,27 +26,8 @@ def start(update, context):
     logger.info(f'{name} ha iniciado el bot')
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="HTML",
-                            text=f"Hola <b>{name}</b>, envíame un enlace de amazon y verás lo que puedo hacer."
-                            )
-
-
-def gasolineras(update, context):
-    name = update.effective_user['first_name']
-
-    idmunicipio: int = 7149
-    urlfiltromunicipio = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/FiltroMunicipio/"
-    filtromunicipio = requests.get(urlfiltromunicipio + str(idmunicipio))
-    jfiltromunicipio = filtromunicipio.json()
-    ideess = str(14816)
-    output_dict = [x for x in jfiltromunicipio['ListaEESSPrecio'] if x['IDEESS'] == ideess]
-    gasoleo = "Gasoleo A: " + output_dict[0]['Precio Gasoleo A'] + " €"
-    gasolina = "Gasolina 95: " + output_dict[0]['Precio Gasolina 95 E5'] + " €"
-
-    user_id = update.effective_user['id']
-    logger.info(f'{name} ha consultado gasolina')
-    context.bot.sendMessage(chat_id=user_id,
-                            parse_mode="HTML",
-                            text=f"<b>⛽ VCC PATERNA</b> \n {gasoleo} \n {gasolina}"
+                            text=f"Hola <b>{name}</b>, con /help verás todo lo que puedo hacer."
+    )
                             )
 
 
@@ -124,6 +105,56 @@ def check_message(update, context):
         respuesta_amazon(update, context, text, domain)
 
 
+def distancia(lat1, long1, lat2, long2):
+    punto_a = (lat1, long1)
+    punto_b = (lat2, long2)
+    distancia_km = distance.distance(punto_a, punto_b).km
+    return distancia_km
+
+
+def carga_gasolineras():
+    url = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
+    api_response = requests.get(url)
+    data_dict = api_response.json()
+    global estaciones_list
+    estaciones_list = data_dict['ListaEESSPrecio']
+
+
+def busca_gasolineras(user_lat, user_lon):
+    lista = []
+    for i in range(len(estaciones_list)):
+        gaslat = estaciones_list[i]['Latitud'].replace(',', '.')
+        gaslon = estaciones_list[i]['Longitud (WGS84)'].replace(',', '.')
+        distanciakm = distancia(user_lat, user_lon, gaslat, gaslon)
+        rotulo = estaciones_list[i]["Rótulo"]
+        diesel = estaciones_list[i]["Precio Gasoleo A"]
+        gasolina95 = estaciones_list[i]["Precio Gasolina 95 E5"]
+        gasolina98 = estaciones_list[i]["Precio Gasolina 98 E5"]
+        if distanciakm < 3 and len(lista) < 5:
+            msg = f"⛽ <b>{rotulo}</b> \n" \
+                  f"- Diesel: {diesel}€ \n" \
+                  f"- Gasolina95: {gasolina95}€ \n" \
+                  f"📍 <a href='https://maps.google.com/maps?q={gaslat},{gaslon}'>Google Maps</a> {round(distanciakm, 2)} Km \n\n\n"
+            lista.append(msg)
+    return lista
+
+
+def location(update, context):
+    user_id = update.effective_user['id']
+    message = update.message
+    user_lat = message.location.latitude
+    user_lon = message.location.longitude
+    carga_gasolineras()
+    lista = busca_gasolineras(user_lat, user_lon)
+    msg = ''.join(lista)
+
+    context.bot.sendMessage(chat_id=user_id,
+                            parse_mode="HTML",
+                            disable_web_page_preview=True,
+                            text=f"{msg}"
+                            )
+
+
 if __name__ == "__main__":
     # Obtenemos la info del bot
     my_bot = telegram.Bot(token=TOKEN_TG)
@@ -137,8 +168,8 @@ dp = updater.dispatcher
 
 # creamos manejador
 dp.add_handler(CommandHandler("start", start))
-dp.add_handler(CommandHandler("gasolineras", gasolineras))
 dp.add_handler(MessageHandler(Filters.text, check_message))
+dp.add_handler(MessageHandler(Filters.location, location))
 
 updater.start_polling()
 print("BOT CARGADO")
