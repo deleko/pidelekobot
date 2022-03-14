@@ -33,6 +33,6 @@ def busca_gasolineras(user_lat, user_lon):
                 msg = f"⛽ <b>{rotulo}</b> \n" \
                       f"- Diesel: {diesel}€ \n" \
                       f"- Gasolina95: {gasolina95}€ \n" \
-                      f"📍 <a href='https://maps.google.com/maps?q={gaslat},{gaslon}'>Google Maps</a> {round(distanciakm, 2)} Km \n\n\n"
+                      f"📍 <a href='https://maps.google.com/maps?q={gaslat},{gaslon}'>Google Maps</a> {round(distanciakm, 2)} Km \n\n"
                 lista.append(msg)
     return lista
