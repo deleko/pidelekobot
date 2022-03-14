@@ -19,10 +19,20 @@ logging.basicConfig(
 def start(update, context):
     name = update.effective_user['first_name']
     user_id = update.effective_user['id']
-    logger.info(f'{name} ha iniciado el bot')
+    logger.info(f'{name} sent /start')
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="HTML",
                             text=f"Hola <b>{name}</b>, con /help verás todo lo que puedo hacer."
+                            )
+
+
+def help(update, context):
+    name = update.effective_user['first_name']
+    user_id = update.effective_user['id']
+    logger.info(f'{name} sent /help')
+    context.bot.sendMessage(chat_id=user_id,
+                            parse_mode="HTML",
+                            text=f"- Mándame la ubicación para saber las gasolineras cercanas. \n - Mándame un link de amazon (y compra con mi link) para invitarme a un café ☕."
                             )
 
 
@@ -66,6 +76,7 @@ dp = updater.dispatcher
 
 # creamos manejador
 dp.add_handler(CommandHandler("start", start))
+dp.add_handler(CommandHandler("help", help))
 dp.add_handler(MessageHandler(Filters.text, check_message))
 dp.add_handler(MessageHandler(Filters.location, location))
 
