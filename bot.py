@@ -29,7 +29,7 @@ def start(update, context):
 def check_message(update, context):
     name = update.effective_user['first_name']
     text = update.message.text
-    logger.info(f"{name} ha enviado un mensaje: {text}")
+    logger.info(f"{name} sent a msg: {text}")
     text = text.strip()
     domain = "{0.netloc}".format(urlsplit(text))
     if domain.find("amazon.") != -1:
@@ -38,7 +38,7 @@ def check_message(update, context):
 
 def location(update, context):
     name = update.effective_user['first_name']
-    logger.info(f"{name} ha enviado la ubicación")
+    logger.info(f"{name} sent location")
     user_id = update.effective_user['id']
     user_lat = update.message.location.latitude
     user_lon = update.message.location.longitude
