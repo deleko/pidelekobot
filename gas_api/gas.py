@@ -34,6 +34,6 @@ def busca_gasolineras(user_lat, user_lon):
                    f"- Gasolina95: {gasolina95}€ \n"
                    f"📍 <a href='https://maps.google.com/maps?q={gaslat},{gaslon}'>Google Maps</a> {distanciakm} Km \n\n")
             msg_list.append(msg)
-    msg_list.sort(key=lambda number: distanciakm)
-    msg_list = msg_list[0:5]
+    msg_list.sort(key=lambda x: x.split("</a>")[1])  # to fix: 10 before 2 int()
+    msg_list = msg_list[0:15]
     return msg_list
