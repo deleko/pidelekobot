@@ -28,10 +28,12 @@ def busca_gasolineras(user_lat, user_lon):
             rotulo = estaciones_list[i]["Rótulo"]
             diesel = estaciones_list[i]["Precio Gasoleo A"].replace(',', '.')
             gasolina95 = estaciones_list[i]["Precio Gasolina 95 E5"].replace(',', '.')
-            if distanciakm < 3 and len(lista) < 5:
-                msg = f"⛽ <b>{rotulo}</b> \n" \
-                      f"- Diesel: {diesel}€ \n" \
-                      f"- Gasolina95: {gasolina95}€ \n" \
-                      f"📍 <a href='https://maps.google.com/maps?q={gaslat},{gaslon}'>Google Maps</a> {round(distanciakm, 2)} Km \n\n"
-                msg_list.append(msg)
+            distanciakm = "{:.2f}".format(distanciakm)
+            msg = (f"⛽ <b>{rotulo}</b> \n"
+                   f"- Diesel: {diesel}€ \n"
+                   f"- Gasolina95: {gasolina95}€ \n"
+                   f"📍 <a href='https://maps.google.com/maps?q={gaslat},{gaslon}'>Google Maps</a> {distanciakm} Km \n\n")
+            msg_list.append(msg)
+    msg_list.sort(key=lambda number: distanciakm)
+    msg_list = msg_list[0:5]
     return msg_list
