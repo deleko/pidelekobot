@@ -32,7 +32,7 @@ def help(update, context):
     logger.info(f'{name} sent /help')
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="HTML",
-                            text=f"- Ubicación para saber las gasolineras cercanas \n\n- Link de amazon <i>(y compra con mi link)</i> para invitarme a un café ☕"
+                            text=f"- Ubicación para saber información de tu zona \n\n- Link de amazon <i>(y compra con mi link)</i> para invitarme a un café ☕"
                             )
 
 
