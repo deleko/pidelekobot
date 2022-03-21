@@ -50,16 +50,40 @@ def location(update, context):
     name = update.effective_user['first_name']
     logger.info(f"{name} sent location")
     user_id = update.effective_user['id']
+    global user_lat
+    global user_lon
     user_lat = update.message.location.latitude
     user_lon = update.message.location.longitude
-    carga_gasolineras()
-    lista = busca_gasolineras(user_lat, user_lon)
-    msg = ''.join(lista)
+    context.bot.sendMessage(chat_id=user_id,
+                            parse_mode="HTML",
+                            disable_web_page_preview=True,
+                            text=f"/gasolineras para ver gasolineras cerca\n"
+                                 f"/tiempo para conocer el tiempo en tu zona"
+                            )
 
+
+def location_gas(update, context):
+    name = update.effective_user['first_name']
+    logger.info(f"{name} check gas")
+    user_id = update.effective_user['id']
+    gas_load()
+    lista = gas_search(user_lat, user_lon)
+    msg = ''.join(lista)
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="HTML",
                             disable_web_page_preview=True,
                             text=f"{msg}"
+                            )
+
+
+def location_weather(update, context):
+    name = update.effective_user['first_name']
+    logger.info(f"{name} check weather")
+    user_id = update.effective_user['id']
+    context.bot.sendMessage(chat_id=user_id,
+                            parse_mode="HTML",
+                            disable_web_page_preview=True,
+                            text="Próximamente"
                             )
 
 
@@ -77,6 +101,8 @@ dp = updater.dispatcher
 # creamos manejador
 dp.add_handler(CommandHandler("start", start))
 dp.add_handler(CommandHandler("help", help))
+dp.add_handler(CommandHandler("gasolineras", location_gas))
+dp.add_handler(CommandHandler("tiempo", location_weather))
 dp.add_handler(MessageHandler(Filters.text, check_message))
 dp.add_handler(MessageHandler(Filters.location, location))
 
