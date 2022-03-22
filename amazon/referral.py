@@ -8,29 +8,25 @@ from docs.constants import *
 
 def scrap_amazon(url):
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.5",  # <-- add "Accept-Language" to try to prevent captcha
-    }
+        "User-Agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/74.0.3729.169 Safari/537.36",
+                        "Accept-Language": "en-US,en;q=0.5", }
     url = "https://" + url
     page = requests.get(url, headers=headers)
     soup = BeautifulSoup(page.content, 'html.parser')
 
-    title = soup.find(id="productTitle").get_text()
-
-    # priceblock_saleprice = soup.find(id="priceblock_saleprice")
-    # priceblock_dealprice = soup.find(id="priceblock_dealprice")
-    # priceblock_ourprice = soup.find(id="priceblock_ourprice")
-    # price = priceblock_saleprice or priceblock_dealprice or priceblock_ourprice
-    # price = price.get_text()
-
-    img_div = soup.find(id="imgTagWrapperId")
-    imgs_str = img_div.img.get('data-a-dynamic-image')
-    imgs_dict = json.loads(imgs_str)
-    num_element = 0
-    image = list(imgs_dict.keys())[num_element]
-
-    # return title, image, price
-    return title, image
+    try:
+        title = soup.find(id="productTitle").get_text()
+        price_whole = soup.find('span', {'class': 'a-price-whole'}).text.strip()
+        price_praction = soup.find('span', {'class': 'a-price-fraction'}).text.strip()
+        image = list(json.loads(soup.find(id="imgTagWrapperId").img.get('data-a-dynamic-image')).keys())[0]
+    except AttributeError:
+        title = ''
+        price_whole = ''
+        price_praction = 'NA'
+        image = ''
+    price = price_whole + price_praction
+    return title, image, price
 
 
 def clear_url(url, domain):
@@ -61,9 +57,10 @@ def respuesta_amazon(update, context, text, domain):
     scrap = scrap_amazon(url)
     title = scrap[0].strip()
     image = scrap[1]
-    # price = scrap[2]
+    price = scrap[2]
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="Markdown",
-                            # text=f"[🔹]({image})*{title}* \n\n💰 {price} \n\n🔗 {url_short}\n"
-                            text=f"[🔹]({image})*{title}* \n\n🔗 {url_short}\n"
+                            disable_web_page_preview=True,
+                            # text = f"[🔹]({image})*{title}* \n\n💰 {price} \n\n🔗 {url_short}\n"
+                            text=f"🔹 *{title}* \n\n💰 {price} \n\n🔗 {url_short}\n"
                             )
