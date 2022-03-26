@@ -1,6 +1,8 @@
 import logging
 import telegram
 from urllib.parse import urlsplit
+
+from telegram import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 from amazon.referral import *
@@ -20,20 +22,20 @@ def start(update, context):
     name = update.effective_user['first_name']
     user_id = update.effective_user['id']
     logger.info(f'{name} sent /start')
+    msg = f"Hola <b>{name}</b>, con /help verás todo lo que puedes enviarme"
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="HTML",
-                            text=f"Hola <b>{name}</b>, con /help verás todo lo que puedes enviarme"
-                            )
+                            text=msg)
 
 
 def help(update, context):
     name = update.effective_user['first_name']
     user_id = update.effective_user['id']
     logger.info(f'{name} sent /help')
+    msg = f"- Ubicación para saber información de tu zona \n\n- Link de amazon <i>(y compra con mi link)</i> para invitarme a un café ☕"
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="HTML",
-                            text=f"- Ubicación para saber información de tu zona \n\n- Link de amazon <i>(y compra con mi link)</i> para invitarme a un café ☕"
-                            )
+                            text=msg)
 
 
 def check_message(update, context):
@@ -43,7 +45,7 @@ def check_message(update, context):
     text = text.strip()
     domain = "{0.netloc}".format(urlsplit(text))
     if domain.find("amazon.") != -1:
-        respuesta_amazon(update, context, text, domain)
+        amazon_referral(update, context, text, domain)
 
 
 def location(update, context):
@@ -54,12 +56,11 @@ def location(update, context):
     global user_lon
     user_lat = update.message.location.latitude
     user_lon = update.message.location.longitude
-    context.bot.sendMessage(chat_id=user_id,
-                            parse_mode="HTML",
-                            disable_web_page_preview=True,
-                            text=f"/gasolineras para ver gasolineras cerca\n"
-                                 f"/tiempo para conocer el tiempo en tu zona"
-                            )
+    buttons = [[KeyboardButton("/gasolineras")], [KeyboardButton("/tiempo")]]
+    keyboard = [[InlineKeyboardButton("🌦️ Tiempo", callback_data='/tiempo'),
+                 InlineKeyboardButton("⛽ Gasolineras", callback_data='/gasolineras')]]
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Elige una de las opciones",
+                             reply_markup=ReplyKeyboardMarkup(buttons))
 
 
 def location_gas(update, context):
@@ -72,19 +73,20 @@ def location_gas(update, context):
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="HTML",
                             disable_web_page_preview=True,
-                            text=f"{msg}"
-                            )
+                            reply_markup=telegram.ReplyKeyboardRemove(),
+                            text=msg)
 
 
 def location_weather(update, context):
     name = update.effective_user['first_name']
     logger.info(f"{name} check weather")
     user_id = update.effective_user['id']
+    msg = "Próximamente"
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="HTML",
                             disable_web_page_preview=True,
-                            text="Próximamente"
-                            )
+                            reply_markup=telegram.ReplyKeyboardRemove(),
+                            text=msg)
 
 
 if __name__ == "__main__":
