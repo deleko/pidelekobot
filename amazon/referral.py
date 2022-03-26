@@ -8,9 +8,9 @@ from docs.constants import *
 
 def scrap_amazon(url):
     headers = {
-        "User-Agent":   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
-                        "Chrome/74.0.3729.169 Safari/537.36",
-                        "Accept-Language": "en-US,en;q=0.5", }
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/74.0.3729.169 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.5", }
     url = "https://" + url
     page = requests.get(url, headers=headers)
     soup = BeautifulSoup(page.content, 'html.parser')
@@ -21,10 +21,10 @@ def scrap_amazon(url):
         price_praction = soup.find('span', {'class': 'a-price-fraction'}).text.strip()
         image = list(json.loads(soup.find(id="imgTagWrapperId").img.get('data-a-dynamic-image')).keys())[0]
     except AttributeError:
-        title = ''
-        price_whole = ''
+        title = 'NA'
+        price_whole = 'NA'
         price_praction = 'NA'
-        image = ''
+        image = 'NA'
     price = price_whole + price_praction
     return title, image, price
 
@@ -49,7 +49,7 @@ def short_url(url):
     return shorturl
 
 
-def respuesta_amazon(update, context, text, domain):
+def amazon_referral(update, context, text, domain):
     user_id = update.effective_user['id']
     url = clear_url(text, domain)
     url_ref = set_referral_url(url)
@@ -58,9 +58,12 @@ def respuesta_amazon(update, context, text, domain):
     title = scrap[0].strip()
     image = scrap[1]
     price = scrap[2]
+    if 'NA' in title + image + price:
+        msg = f"Aquí tienes el enlace de compra:\n\n🔗 {url_short}"
+    else:
+        msg = f"Aquí tienes el enlace de compra:\n\n🔹 *{title}*\n💰 {price}\n🔗 {url_short}"
+
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="Markdown",
                             disable_web_page_preview=True,
-                            # text = f"[🔹]({image})*{title}* \n\n💰 {price} \n\n🔗 {url_short}\n"
-                            text=f"🔹 *{title}* \n\n💰 {price} \n\n🔗 {url_short}\n"
-                            )
+                            text=msg)
