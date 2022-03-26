@@ -10,8 +10,7 @@ def weather_api(lat, lon):
     response = requests.get(complete_url)
     data_dict = response.json()
     status = data_dict["cod"]
-
-    if status == 200:
+    try:
         api_city = data_dict["name"]
         api_country = data_dict["sys"]["country"]
         api_current_temperature = round(data_dict["main"]["temp"] - 273.15, 1)
@@ -19,6 +18,5 @@ def weather_api(lat, lon):
         api_weather_description = data_dict["weather"][0]["description"].capitalize()
 
         return status, api_city, api_country, api_weather_description, api_current_temperature, api_current_feeling
-
-    else:
+    except:
         return 0, status
