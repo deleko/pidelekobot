@@ -7,6 +7,7 @@ from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 from amazon.referral import *
 from gas_api.gas import *
+from weather_api.weather import *
 
 # Log config
 logger = logging.getLogger()
@@ -81,7 +82,19 @@ def location_weather(update, context):
     name = update.effective_user['first_name']
     logger.info(f"{name} check weather")
     user_id = update.effective_user['id']
-    msg = "Próximamente"
+    weather_found = weather_api(user_lat, user_lon)
+    status = weather_found[0]
+    if status == 200:
+        city = weather_found[1]
+        country = weather_found[2]
+        weather_description = weather_found[3]
+        current_temperature = weather_found[4]
+        current_feeling = weather_found[5]
+        msg = (f"El tiempo en {city}, {country}:\n"
+               f"{current_temperature}ºC, {weather_description}\n"
+               f"Sensación de {current_feeling}ºC")
+    else:
+        msg = "¿Dónde demonios estás?"
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="HTML",
                             disable_web_page_preview=True,
