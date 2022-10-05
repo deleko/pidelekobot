@@ -10,6 +10,12 @@ from gas_api.gas import *
 from weather_api.weather import *
 from user_info.user_crud import *
 
+import requests
+import urlextract
+from urlextract import URLExtract
+import validators
+from validators import ValidationFailure
+
 # Log config
 logger = logging.getLogger()
 logging.basicConfig(
@@ -41,16 +47,46 @@ def help(update, context):
                             parse_mode="HTML",
                             text=msg)
 
+def is_string_an_url(url_string: str) -> bool:
+    result = validators.url(url_string)
+    if isinstance(result, ValidationFailure):
+        return False
+
+    return result
 
 def check_message(update, context):
     name = update.effective_user['first_name']
     text = update.message.text
     logger.info(f"{name} sent a msg: {text}")
-    text = text.strip()
-    domain = "{0.netloc}".format(urlsplit(text))
-    if domain.find("amazon.") != -1:
-        amazon_referral(update, context, text, domain)
 
+    ht = "https://"
+
+    #extrae la primera url del mensaje (si es que hay)
+    extractor = URLExtract()
+    urls = extractor.find_urls(text)
+    if len(urls) > 0:
+        text = urls[0]
+
+    text_s = text.strip()
+    domain = "{0.netloc}".format(urlsplit(text_s))
+    if domain.find("amazon.") != -1:
+        amazon_referral(update, context, text_s, domain)
+    else:
+        if is_string_an_url(text):
+            #request al enlace por si tiene redirecciones quedarnos con la url final
+            r = requests.get(text)
+            text_2 = r.url
+            text_2s = text_2.strip()
+            domain_2 = "{0.netloc}".format(urlsplit(text_2s))
+            if domain_2.find("amazon.") != -1:
+                amazon_referral(update, context, text_2s, domain_2)
+        elif is_string_an_url(ht+text):
+            r = requests.get(ht+text)
+            text_3 = r.url
+            text_3s = text_3.strip()
+            domain_3 = "{0.netloc}".format(urlsplit(text_3s))
+            if domain_3.find("amazon.") != -1:
+                amazon_referral(update, context, text_3s, domain_3)
 
 def location(update, context):
     name = update.effective_user['first_name']

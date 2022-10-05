@@ -3,3 +3,5 @@ bs4
 requests
 setuptools
 pyshorteners
+validators
+urlextract
