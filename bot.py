@@ -2,12 +2,13 @@ import logging
 import telegram
 from urllib.parse import urlsplit
 
-from telegram import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, ForceReply
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, CallbackContext, CallbackQueryHandler
 
 from amazon.referral import *
 from gas_api.gas import *
 from weather_api.weather import *
+from lotto_api.lotto import *
 from user_info.user_crud import *
 
 # Log config
@@ -114,6 +115,73 @@ def location_weather(update, context):
                             text=msg)
 
 
+def get_lotto(update, context):
+    name = update.effective_user['first_name']
+    logger.info(f"{name} get lotto data")
+    user_id = update.effective_user['id']
+    check_lotto_prizes(user_id)
+    lotto_data = get_lotto_data(user_id)
+    if lotto_data == -1:
+        msg = 'No me has envíado ningún número todavía.'
+    else:
+        msg = '<b>TUS NÚMEROS</b>\n\n'
+        for lotto_number in lotto_data:
+            msg += "🎟️ " + str(lotto_number[0]) + " 💰 " + str(round(lotto_number[1] / 20, 2)) + "€\n"
+        msg += '\n<i>*premio por € jugado</i>'
+    context.bot.sendMessage(chat_id=user_id,
+                            parse_mode="HTML",
+                            text=msg)
+
+
+LOTTO_BUTTONS, LOTTO_NUMBER = range(2)
+
+
+def lotto_conversation(update, context: CallbackContext):
+    keyboard = [[InlineKeyboardButton("🍀 Añadir un número", callback_data='add_lotto'), ],
+                [InlineKeyboardButton("💰 Consultar mis números", callback_data='check_lotto')], ]
+    markup = InlineKeyboardMarkup(keyboard)
+
+    update.message.reply_text('Elige una opción para la loteria de navidad de 2022 🧑‍🎄 ', reply_markup=markup)
+
+    return LOTTO_BUTTONS
+
+
+def lotto_actions(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer(f'button click {query.data} recieved')
+
+    if query.data == 'add_lotto':
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text='Dime el número', reply_markup=ForceReply())
+        return LOTTO_NUMBER
+
+    if query.data == 'check_lotto':
+        get_lotto(update, context)
+        return ConversationHandler.END
+
+    return ConversationHandler.END
+
+
+def put_lotto(update, context):
+    name = update.effective_user['first_name']
+    lotto_number = update.message.text
+    logger.info(f"{name} put lotto data")
+    user_id = update.effective_user['id']
+    lotto_data = put_lotto_data(user_id, name, lotto_number)
+    if lotto_data == 0:
+        msg = '🎟️ ' + str(lotto_number) + ' añadido correctamente\n\n Mucha suerte 🍀'
+    context.bot.sendMessage(chat_id=user_id,
+                            parse_mode="HTML",
+                            text=msg)
+    return ConversationHandler.END
+
+
+def cancel(update: Update, context: CallbackContext):
+    update.message.reply_text(
+        'Name Conversation cancelled by user. Bye. Send /set_name to start again')
+    return ConversationHandler.END
+
+
 if __name__ == "__main__":
     # Obtenemos la info del bot
     my_bot = telegram.Bot(token=TOKEN_TG)
@@ -130,6 +198,14 @@ dp.add_handler(CommandHandler("start", start))
 dp.add_handler(CommandHandler("help", help))
 dp.add_handler(CommandHandler("gasolineras", location_gas))
 dp.add_handler(CommandHandler("tiempo", location_weather))
+dp.add_handler(ConversationHandler(
+    entry_points=[CommandHandler('loteria', lotto_conversation)],
+    states={
+        LOTTO_BUTTONS: [CallbackQueryHandler(lotto_actions)],
+        LOTTO_NUMBER: [MessageHandler(Filters.text, put_lotto)]
+    },
+    fallbacks=[CommandHandler('cancel', cancel)]
+))
 dp.add_handler(MessageHandler(Filters.text, check_message))
 dp.add_handler(MessageHandler(Filters.location, location))
 
