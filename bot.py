@@ -37,10 +37,11 @@ def help(update, context):
     logger.info(f'{name} sent /help')
     msg = "🌦 Consultar el /tiempo en tu zona.\n\n " \
           "⛽ Buscar /gasolineras cerca y ver el precio.\n\n" \
-          "☕ Link de amazon <i>(y compra con mi link)</i> para invitarme a un café."
+          "☕ Link de amazon para obtener el enlace con referido.\n\n" \
+          "🍀 Consultar boletos de la /loteria de navidad."
     context.bot.sendMessage(chat_id=user_id,
-                            parse_mode="HTML",
-                            text=msg)
+                    parse_mode="HTML",
+                    text=msg)
 
 
 def check_message(update, context):
