@@ -170,6 +170,11 @@ def put_lotto(update, context):
     lotto_data = put_lotto_data(user_id, name, lotto_number)
     if lotto_data == 0:
         msg = '🎟️ ' + str(lotto_number) + ' añadido correctamente\n\n Mucha suerte 🍀'
+    if lotto_data == 1:
+        msg = '🎟️ ' + str(lotto_number) + ' número repetido'
+    if lotto_data == 2:
+        msg = '🎟️ ' + str(lotto_number) + ' no es un número válido'
+
     context.bot.sendMessage(chat_id=user_id,
                             parse_mode="HTML",
                             text=msg)
