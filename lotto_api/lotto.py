@@ -13,11 +13,16 @@ def put_lotto_data(user_id, username, lotto_number):
     cur.execute(search_user_number, (user_id, lotto_number,))
     usernumberexists = cur.fetchone()[0] > 0
     if usernumberexists:
-        pass
+        # lotto data already stored
+        return 1
     else:
-        insert_user_number = """INSERT INTO USER_LOTTO (user_id, user_alias, lotto_number, lotto_prize) VALUES (?, ?, ?, 0)"""
-        cur.execute(insert_user_number, (user_id, username, lotto_number))
-    con.commit()
+        if str(lotto_number).isnumeric():
+            insert_user_number = """INSERT INTO USER_LOTTO (user_id, user_alias, lotto_number, lotto_prize) VALUES (?, ?, ?, 0)"""
+            cur.execute(insert_user_number, (user_id, username, lotto_number))
+            con.commit()
+        else:
+            # lotto data is not a number
+            return 2
     con.close()
     return 0
 
@@ -44,7 +49,7 @@ def check_lotto_prizes(user_id):
     response = urllib.request.urlopen(status_url)
     data = response.read()
     response_json = json.loads(data.decode("utf8").replace("info=", ""))
-    status = response_json["status"]
+    lotto_status = response_json["status"]
     status_decode = {
         0: "El sorteo no ha empezado",
         1: "El sorteo ha empezado",
@@ -52,18 +57,23 @@ def check_lotto_prizes(user_id):
         3: "El sorteo ha terminado, se están validando los datos",
         4: "El sorteo ha terminado, los datos son oficiales"
     }
-    status_decode = status_decode.get(status)
+    status_decode = status_decode.get(lotto_status)
 
     # while the lotto is on
-    if 1 == 1:
+    if lotto_status > 0:
         url = "http://api.elpais.com/ws/LoteriaNavidadPremiados?n="
         lotto_numbers = get_lotto_data(user_id)
-        for number in lotto_numbers:
-            response = urllib.request.urlopen(url + str(number[0]))
-            data = response.read()
-            response_json = json.loads(data.decode("utf8").replace("busqueda=", ""))
-            prize = response_json["premio"]
-            patch_lotto_prize(number[0], prize)
+        lotto_data_exists = lotto_numbers != -1
+
+        if lotto_data_exists:
+            for number in lotto_numbers:
+                # if prize stored is zero
+                if number[1] == 0:
+                    response = urllib.request.urlopen(url + str(number[0]))
+                    data = response.read()
+                    response_json = json.loads(data.decode("utf8").replace("busqueda=", ""))
+                    prize = response_json["premio"]
+                    patch_lotto_prize(number[0], prize)
 
 
 def patch_lotto_prize(number, prize):
